@@ -503,8 +503,9 @@ async function handleRequest(req, res) {
         const userId = url.searchParams.get("id");
         if (!userId) return sendJson(res, 400, { error: "ID do usuário ausente." });
 
-        // Query definitiva baseada na sonda: coluna correta é 'user_id'
-        const urlProfile = new URL(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/profiles?user_id=eq.${userId}&select=*`);
+        // Query baseada na sonda: a tabela pode ser 'profiles' ou 'rjm_auxiliares'
+        const table = process.env.SUPABASE_TABLE_AUXILIARES || 'profiles';
+        const urlProfile = new URL(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/${table}?id=eq.${userId}&select=*`);
         try {
           const response = await fetch(urlProfile, {
             headers: {
@@ -514,7 +515,20 @@ async function handleRequest(req, res) {
           });
           const data = await response.json();
           // Retornar o primeiro registro encontrado
-          return sendJson(res, 200, data[0] || {});
+          if (data && data.length > 0) {
+            return sendJson(res, 200, data[0]);
+          }
+          
+          // Fallback para user_id se for a tabela profiles legada
+          const urlLegacy = new URL(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/${table}?user_id=eq.${userId}&select=*`);
+          const resLegacy = await fetch(urlLegacy, {
+            headers: {
+              apikey: supabaseKey,
+              Authorization: `Bearer ${supabaseKey}`
+            }
+          });
+          const dataLegacy = await resLegacy.json();
+          return sendJson(res, 200, dataLegacy[0] || {});
         } catch (err) {
           console.error('Erro ao buscar perfil:', err);
           return sendJson(res, 500, { error: "Erro ao buscar perfil." });
@@ -530,7 +544,8 @@ async function handleRequest(req, res) {
             console.log("Recebido /api/profile (POST):", profileData);
             if (!profileData.id) return sendJson(res, 400, { error: "ID do usuário obrigatório." });
 
-            const urlUpsert = new URL(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/profiles`);
+            const table = process.env.SUPABASE_TABLE_AUXILIARES || 'profiles';
+            const urlUpsert = new URL(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/${table}`);
             const response = await fetch(urlUpsert, {
               method: "POST",
               headers: {
@@ -586,7 +601,16 @@ async function handleRequest(req, res) {
           return sendJson(res, 500, { error: "Configuração do Supabase ausente." });
         }
 
-        const url = new URL(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/rjm_comuns?select=comum,cidade,cooperador_jovens,telefone&order=comum.asc`);
+        const normalizeValue = (value) => String(value || "").trim();
+        const normalizeComum = (item) => {
+          // Prioridade para nomes de colunas can\u00F4nicos 'comum' e 'cidade'
+          const comum = normalizeValue(item?.comum || item?.name || item?.nome || item?.descricao || item?.description);
+          const cidade = normalizeValue(item?.cidade || item?.city || item?.municipio || item?.localidade);
+          if (!comum) return null;
+          return { comum, cidade };
+        };
+
+        const url = new URL(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/comum?select=*`);
         try {
           const response = await fetch(url, {
             headers: {
@@ -595,7 +619,10 @@ async function handleRequest(req, res) {
             }
           });
           const data = await response.json();
-          return sendJson(res, 200, data);
+          const comuns = Array.isArray(data)
+            ? data.map(normalizeComum).filter(Boolean).sort((a, b) => a.comum.localeCompare(b.comum, "pt-BR"))
+            : [];
+          return sendJson(res, 200, comuns);
         } catch (err) {
           return sendJson(res, 500, { error: "Erro ao buscar comuns." });
         }
@@ -760,3 +787,4 @@ if (process.env.VERCEL) {
     console.log(`Servidor iniciado em http://localhost:${PORT}`);
   });
 }
+

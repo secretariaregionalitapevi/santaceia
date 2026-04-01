@@ -100,6 +100,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const password = e.target.password.value;
       const confirmPassword = e.target.confirmPassword.value;
       const comum = e.target.comum.value;
+      const cidade = e.target.cidade ? e.target.cidade.value : 'Itapevi';
       const feedback = document.getElementById('registerFeedback');
 
       if (password !== confirmPassword) {
@@ -117,7 +118,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         options: {
           data: {
             full_name: fullName,
-            comum: comum
+            comum: comum,
+            cidade: cidade
           }
         }
       });
@@ -137,7 +139,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             full_name: fullName,
             email: email,
             comum: comum,
-            cidade: 'Itapevi'
+            cidade: cidade
           })
         });
         const resProfData = await resProf.json();

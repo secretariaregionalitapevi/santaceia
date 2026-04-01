@@ -85,6 +85,11 @@
       const comumSearch = document.getElementById('comumSearch');
       const comumResults = document.getElementById('comumResults');
       let allComuns = [];
+      const findComum = (value = '') => {
+        const term = String(value || '').trim().toLowerCase();
+        if (!term) return null;
+        return allComuns.find((item) => String(item.comum || '').trim().toLowerCase() === term) || null;
+      };
 
       try {
         const resComuns = await fetch('/api/comuns');
@@ -152,7 +157,7 @@
             
             // Tentar descobrir a comum em nomes de campos variados
             const userComum = meta.comum || meta.comum_congregacao || meta.congregacao || meta.polo || meta.polo_participacao || '';
-            const userCity = meta.cidade || meta.municipio || meta.polo || 'Itapevi';
+            const userCity = meta.cidade || meta.municipio || (findComum(userComum) || {}).cidade || meta.polo || 'Itapevi';
             
             if (userComum) {
               console.log('Comum descoberta via metadata:', userComum);
@@ -173,7 +178,7 @@
 
           if (profile && profile.comum) {
             const userComum = profile.comum;
-            const userCity = profile.cidade || 'Itapevi';
+            const userCity = profile.cidade || (findComum(userComum) || {}).cidade || 'Itapevi';
             
             comumInput.value = userComum;
             comumSearch.value = userComum;
@@ -293,3 +298,4 @@
   </script>
 </body>
 </html>
+

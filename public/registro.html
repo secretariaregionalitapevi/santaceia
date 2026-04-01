@@ -65,6 +65,7 @@
           <div class="sac-search-container">
             <input type="text" id="comumSearch" placeholder="Pesquise sua Comum..." autocomplete="off" />
             <input type="hidden" id="comumSelect" name="comum" required />
+            <input type="hidden" id="cidadeSelect" name="cidade" />
             <div id="comumResults" class="sac-search-results"></div>
           </div>
         </div>
@@ -107,7 +108,7 @@
           );
           
           comumResults.innerHTML = filtered.map(c => `
-            <div class="sac-search-item" data-value="${c.comum}">
+            <div class="sac-search-item" data-value="${c.comum}" data-cidade="${c.cidade}">
               <strong>${c.comum}</strong><br>
               <small style="color: #64748b">${c.cidade}</small>
             </div>
@@ -126,8 +127,12 @@
           const item = e.target.closest('.sac-search-item');
           if (item) {
             const val = item.dataset.value;
+            const cidade = item.dataset.cidade;
             comumInput.value = val;
             comumSearch.value = val;
+            if (document.getElementById('cidadeSelect')) {
+              document.getElementById('cidadeSelect').value = cidade || '';
+            }
             comumResults.classList.remove('active');
           }
         });
