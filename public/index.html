@@ -3,18 +3,31 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>Principal - Presença EBI - Regional Itapevi</title>
   <link rel="icon" type="image/png" href="/assets/favicon.png" />
-  <link rel="stylesheet" href="/styles/main.css?v=20260319" />
+  <link rel="stylesheet" href="/styles/main.css?v=1.0.1" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/scripts/auth.js"></script>
+  <script src="/scripts/auth.js?v=1.0.1"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body style="background: #f1f5f9; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+  
+  <div class="top-nav">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <img src="/assets/logo-ccb.png" style="height: 24px;" alt="CCB" />
+      <span style="font-weight: 700; color: var(--brand);">Regional Itapevi</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <a href="#" id="btnLogoutTop" class="btn-logout">Sair</a>
+    </div>
+  </div>
+
   <main class="auth-wrap" style="padding: 0; display: flex; align-items: center; justify-content: center; width: 100%;">
 
-    <div class="sac-card" style="width: min(600px, 95%); position: relative;">
-      <button id="btnLogout" style="position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 700; z-index: 10; text-transform: uppercase; transition: all 0.3s;">Voltar</button>
+    <div class="sac-card" style="position: relative;">
       <header class="sac-header">
         <img src="/assets/logo-ccb.png" alt="CCB" class="sac-logo" />
         <h1 class="sac-title">EBI - Espaço Bíblico Infantil</h1>
@@ -23,15 +36,15 @@
 
       <div class="sac-body">
         <form id="selectionForm" class="sac-form">
-          <div class="form-group">
-            <div class="input-icon-box" style="width: 140px; font-size: 13px; font-weight: 700; color: #1e3a5a; text-transform: uppercase;">Mês</div>
+          <div class="form-group stack-mobile">
+            <div class="input-icon-box" style="font-size: 13px; font-weight: 700; color: #1e3a5a; text-transform: uppercase;">Mês</div>
             <select id="mes" name="mes" required></select>
           </div>
 
           <input type="hidden" id="municipio" name="municipio" required />
 
-          <div class="form-group">
-            <div class="input-icon-box" style="width: 140px; font-size: 13px; font-weight: 700; color: #1e3a5a; text-transform: uppercase;">Comum</div>
+          <div class="form-group stack-mobile">
+            <div class="input-icon-box" style="font-size: 13px; font-weight: 700; color: #1e3a5a; text-transform: uppercase;">Comum</div>
             <div class="sac-search-container">
               <input type="text" id="comumSearch" placeholder="Pesquise sua Comum..." autocomplete="off" />
               <input type="hidden" id="comum" name="comum" required />
@@ -211,12 +224,15 @@
         };
       });
 
-      // Botão Voltar (Logout)
-      document.getElementById('btnLogout').onclick = async () => {
-        if (!window.supabaseClient) await window.initSupabase();
-        await window.supabaseClient.auth.signOut();
-        window.location.href = '/login.html';
-      };
+      // Botão Sair (Logout)
+      const btnSair = document.getElementById('btnLogoutTop');
+      if (btnSair) {
+        btnSair.onclick = async () => {
+          if (!window.supabaseClient) await window.initSupabase();
+          await window.supabaseClient.auth.signOut();
+          window.location.href = '/login.html';
+        };
+      }
 
     });
   </script>

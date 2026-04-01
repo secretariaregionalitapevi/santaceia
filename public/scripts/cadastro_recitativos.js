@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       <strong>Mês:</strong> ${config.mes} | 
       <strong>Município:</strong> ${config.municipio} | 
       <strong>Comum:</strong> ${config.comum} <br>
-      <span style="color: var(--brand); font-weight: 700;">Auxiliar: ${name}</span>
+      <span style="color: var(--brand); font-weight: 700;">Nome: ${name}</span>
     `;
   };
 
@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     card.innerHTML = `
       <div class="sunday-card-title">${dateLabel}</div>
       <input type="hidden" name="date_${index}" value="${dateLabel}">
-      <div class="grid-counts" style="grid-template-columns: 1fr 1fr 1fr;">
+      <div class="grid-counts">
         <div class="form-group">
           <label>Meninas</label>
           <input type="number" name="meninas_${index}" min="0" value="0" required class="count-input">
