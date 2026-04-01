@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Principal - Presença EBI - Regional Itapevi</title>
+  <link rel="icon" type="image/png" href="/assets/favicon.png" />
+  <link rel="stylesheet" href="/styles/main.css?v=20260319" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/scripts/auth.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body style="background: #f1f5f9; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+  <main class="auth-wrap" style="padding: 0; display: flex; align-items: center; justify-content: center; width: 100%;">
+
+    <div class="sac-card" style="width: min(600px, 95%); position: relative;">
+      <button id="btnLogout" style="position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 700; z-index: 10; text-transform: uppercase; transition: all 0.3s;">Voltar</button>
+      <header class="sac-header">
+        <img src="/assets/logo-ccb.png" alt="CCB" class="sac-logo" />
+        <h1 class="sac-title">EBI - Espaço Bíblico Infantil</h1>
+        <p class="sac-subtitle">Controle de Presença - Regional Itapevi</p>
+      </header>
+
+      <div class="sac-body">
+        <form id="selectionForm" class="sac-form">
+          <div class="form-group">
+            <div class="input-icon-box" style="width: 140px; font-size: 13px; font-weight: 700; color: #1e3a5a; text-transform: uppercase;">Mês</div>
+            <select id="mes" name="mes" required></select>
+          </div>
+
+          <input type="hidden" id="municipio" name="municipio" required />
+
+          <div class="form-group">
+            <div class="input-icon-box" style="width: 140px; font-size: 13px; font-weight: 700; color: #1e3a5a; text-transform: uppercase;">Comum</div>
+            <div class="sac-search-container">
+              <input type="text" id="comumSearch" placeholder="Pesquise sua Comum..." autocomplete="off" />
+              <input type="hidden" id="comum" name="comum" required />
+              <div id="comumResults" class="sac-search-results"></div>
+            </div>
+          </div>
+
+          <div style="margin-top: 30px;">
+            <p style="margin-bottom: 20px; color: #64748b; font-size: 14px;">Selecione o tipo de lançamento para continuar:</p>
+            <div class="grid-btns" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+              <button type="button" class="sac-btn" data-type="all" style="margin-top: 0; font-size: 14px;">TODOS os domingos</button>
+              <button type="button" class="sac-btn" data-type="one" style="margin-top: 0; background: #64748b; font-size: 14px;">APENAS UM domingo</button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <footer class="sac-page-footer" style="margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 15px;">
+        © Aplicativo EBI v1.0<br>
+        Espaço Bíblico Infantil - Regional Itapevi
+      </footer>
+    </div>
+  </main>
+
+  <script>
+    // Proteger a rota e popular UI
+    window.addEventListener('load', async () => {
+      window.currentUser = await window.checkAuth();
+      
+      // Popular Comuns (Casas de Oração)
+      const comumInput = document.getElementById('comum');
+      const comumSearch = document.getElementById('comumSearch');
+      const comumResults = document.getElementById('comumResults');
+      let allComuns = [];
+
+      try {
+        const resComuns = await fetch('/api/comuns');
+        allComuns = await resComuns.json();
+        
+        const renderResults = (filter = '') => {
+          const filtered = allComuns.filter(c => 
+            c.comum.toLowerCase().includes(filter.toLowerCase()) || 
+            c.cidade.toLowerCase().includes(filter.toLowerCase())
+          );
+          
+          comumResults.innerHTML = filtered.map(c => `
+            <div class="sac-search-item" data-value="${c.comum}" data-city="${c.cidade}">
+              <strong>${c.comum}</strong><br>
+              <small style="color: #64748b">${c.cidade}</small>
+            </div>
+          `).join('');
+          
+          comumResults.classList.toggle('active', filtered.length > 0 && filter !== '');
+        };
+
+        comumSearch.addEventListener('input', (e) => renderResults(e.target.value));
+        comumSearch.addEventListener('focus', () => {
+          if (comumSearch.value === '') renderResults('');
+          comumResults.classList.add('active');
+        });
+
+        comumResults.addEventListener('mouseover', (e) => {
+          const item = e.target.closest('.sac-search-item');
+          if (item) item.style.background = '#f1f5f9';
+        });
+
+        comumResults.addEventListener('mousedown', (e) => { // Use mousedown to trigger before blur
+          const item = e.target.closest('.sac-search-item');
+          if (item) {
+            const val = item.dataset.value;
+            const city = item.dataset.city;
+            comumInput.value = val;
+            comumSearch.value = val;
+            document.getElementById('municipio').value = city;
+            comumResults.classList.remove('active');
+          }
+        });
+
+        // Fechar ao clicar fora
+        document.addEventListener('click', (e) => {
+          if (!comumSearch.contains(e.target) && !comumResults.contains(e.target)) {
+            comumResults.classList.remove('active');
+          }
+        });
+
+        // Se o usuário tem uma comum no perfil, pré-selecionar
+        if (window.currentUser?.user_metadata?.comum) {
+          const userComum = window.currentUser.user_metadata.comum;
+          const userCity = window.currentUser.user_metadata.cidade || 'Itapevi'; // Default para Itapevi se faltar
+          comumInput.value = userComum;
+          comumSearch.value = userComum;
+          document.getElementById('municipio').value = userCity;
+          console.log('Pré-seleção aplicada:', { userComum, userCity });
+        }
+      } catch (err) {
+        console.error('Erro ao carregar comuns:', err);
+      }
+
+      // Popular meses
+      const mesSelect = document.getElementById('mes');
+      const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+      const now = new Date();
+      meses.forEach((m, i) => {
+        const opt = document.createElement('option');
+        opt.value = m;
+        opt.textContent = m;
+        if (i === now.getMonth()) opt.selected = true;
+        mesSelect.appendChild(opt);
+      });
+
+      // Função de processamento e navegação
+      const handleNavigation = (type) => {
+        const mes = document.getElementById('mes').value;
+        const comum = document.getElementById('comum').value;
+        let municipio = document.getElementById('municipio').value;
+
+        // Se o município estiver vazio mas a comum preenchida, tenta colocar Itapevi por padrão
+        if (comum && !municipio) {
+          municipio = 'Itapevi';
+          document.getElementById('municipio').value = 'Itapevi';
+        }
+
+        console.log('Validando navegação:', { mes, municipio, comum });
+
+        if (!mes || !municipio || !comum) {
+          // Tenta recuperar do search se estiver preenchido mas não "clicado"
+          const searchVal = document.getElementById('comumSearch').value;
+          if (searchVal && (!comum || !municipio)) {
+            // Se o usuário digitou mas não clicou, tentamos pegar o primeiro resultado
+            const firstResult = document.querySelector('.sac-search-item');
+            if (firstResult) {
+              document.getElementById('comum').value = firstResult.dataset.value;
+              document.getElementById('municipio').value = firstResult.dataset.city;
+              return handleNavigation(type); // Tenta de novo
+            }
+          }
+
+          Swal.fire({
+            title: 'Campos Incompletos',
+            text: 'Por favor, selecione o Mês, Município e Casa de Oração antes de prosseguir.',
+            icon: 'warning',
+            confirmButtonColor: '#003049'
+          });
+          return;
+        }
+
+        // Calcular domingos
+        const mesesNomes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+        const mesIndex = mesesNomes.indexOf(mes);
+        const year = new Date().getFullYear();
+        const sundays = [];
+        const d = new Date(year, mesIndex, 1);
+        while (d.getMonth() === mesIndex) {
+          if (d.getDay() === 0) {
+            sundays.push(new Date(d).toLocaleDateString('pt-BR'));
+          }
+          d.setDate(d.getDate() + 1);
+        }
+        
+        const configData = {
+          mes,
+          municipio,
+          comum,
+          type,
+          sundays
+        };
+        
+        sessionStorage.setItem('recitativos_config', JSON.stringify(configData));
+        window.location.href = '/cadastro';
+      };
+
+      // Configurar botões de tipo
+      const typeBtns = document.querySelectorAll('.grid-btns .sac-btn');
+      typeBtns.forEach(btn => {
+        btn.onclick = () => {
+          handleNavigation(btn.dataset.type);
+        };
+      });
+
+      // Botão Voltar (Logout)
+      document.getElementById('btnLogout').onclick = async () => {
+        if (!window.supabaseClient) await window.initSupabase();
+        await window.supabaseClient.auth.signOut();
+        window.location.href = '/login.html';
+      };
+
+    });
+  </script>
+</body>
+</html>

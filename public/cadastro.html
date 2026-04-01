@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lançamento - Presença EBI - Regional Itapevi</title>
+  <link rel="icon" type="image/png" href="/assets/favicon.png" />
+  <link rel="stylesheet" href="/styles/main.css?v=20260319" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/scripts/auth.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+  <div class="top-nav">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <img src="/assets/logo-ccb.png" style="height: 24px;" alt="CCB" />
+      <span style="font-weight: 700; color: var(--brand);">Regional Itapevi</span>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <a href="/" class="btn-logout btn-back">← Voltar</a>
+      <a href="#" id="btnLogoutTop" class="btn-logout">Sair</a>
+    </div>
+
+  </div>
+
+  <main class="auth-wrap">
+    <div class="card" style="width: min(800px, 100%);">
+      <header class="card-header">
+        <img src="/assets/logo-ccb.png" alt="CCB" class="logo" style="max-width: 120px; margin-bottom: 8px;" />
+        <h1>EBI - Presença</h1>
+        <p id="headerSubtitle">Espaço Bíblico Infantil - Regional Itapevi</p>
+      </header>
+
+      <div class="card-body">
+        <div id="selectionSummary" style="background: #f1f5f9; padding: 16px; border-radius: 8px; margin-bottom: 24px; font-size: 15px; border-left: 4px solid var(--brand); line-height: 1.6;">
+          Carregando informações...
+        </div>
+
+
+        <form id="recitativosForm">
+          <div id="datePickerRow" class="form-group hidden">
+            <label for="selectedDate">Selecione o Domingo</label>
+            <select id="selectedDate" name="selected_date">
+              <option value="">Selecione...</option>
+            </select>
+          </div>
+
+          <div id="cardsContainer">
+            <!-- Cards gerados dinamicamente -->
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block">Finalizar e Enviar Presença</button>
+        </form>
+      </div>
+
+      <footer class="card-footer">
+        Setor Itapevi - Regional Itapevi
+      </footer>
+    </div>
+  </main>
+
+  <script>
+    // Proteger a rota
+    window.addEventListener('load', async () => {
+      window.currentUser = await window.checkAuth();
+      if (window.currentUser) {
+        // Trigger summary update if the script is already loaded
+        if (window.updateSummaryWithName) {
+          window.updateSummaryWithName(window.currentUser);
+        }
+      }
+      
+      const btnLogout = document.getElementById('btnLogoutTop');
+      if (btnLogout) {
+        btnLogout.onclick = async () => {
+          await supabaseClient.auth.signOut();
+          window.location.href = '/login.html';
+        };
+      }
+    });
+
+
+  </script>
+  <script src="/scripts/cadastro_recitativos.js"></script>
+</body>
+</html>
