@@ -494,6 +494,71 @@ async function handleRequest(req, res) {
   const pathname = url.pathname;
 
   try {
+    // --- ROTA DE PERFIL (GET/POST) - Prioridade Máxima ---
+    if (pathname === "/api/profile") {
+      const supabaseUrl = process.env.SUPABASE_URL;
+      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+      if (req.method === "GET") {
+        const userId = url.searchParams.get("id");
+        if (!userId) return sendJson(res, 400, { error: "ID do usuário ausente." });
+
+        // Query definitiva baseada na sonda: coluna correta é 'user_id'
+        const urlProfile = new URL(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/profiles?user_id=eq.${userId}&select=*`);
+        try {
+          const response = await fetch(urlProfile, {
+            headers: {
+              apikey: supabaseKey,
+              Authorization: `Bearer ${supabaseKey}`
+            }
+          });
+          const data = await response.json();
+          // Retornar o primeiro registro encontrado
+          return sendJson(res, 200, data[0] || {});
+        } catch (err) {
+          console.error('Erro ao buscar perfil:', err);
+          return sendJson(res, 500, { error: "Erro ao buscar perfil." });
+        }
+      }
+
+      if (req.method === "POST") {
+        let body = "";
+        req.on("data", chunk => body += chunk);
+        req.on("end", async () => {
+          try {
+            const profileData = JSON.parse(body);
+            console.log("Recebido /api/profile (POST):", profileData);
+            if (!profileData.id) return sendJson(res, 400, { error: "ID do usuário obrigatório." });
+
+            const urlUpsert = new URL(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/profiles`);
+            const response = await fetch(urlUpsert, {
+              method: "POST",
+              headers: {
+                apikey: supabaseKey,
+                Authorization: `Bearer ${supabaseKey}`,
+                "Content-Type": "application/json",
+                "Prefer": "resolution=merge-duplicates"
+              },
+              body: JSON.stringify(profileData)
+            });
+
+            if (!response.ok) {
+              const errorText = await response.text();
+              console.error("Erro no Supabase ao dar upsert:", errorText);
+              return sendJson(res, response.status, { error: "Erro ao salvar perfil no Supabase.", details: errorText });
+            }
+
+            console.log("Perfil salvo com sucesso no Supabase!");
+            return sendJson(res, 200, { success: true });
+          } catch (err) {
+            console.error("Erro interno no processamento do perfil:", err);
+            return sendJson(res, 500, { error: "Erro interno ao processar perfil." });
+          }
+        });
+        return;
+      }
+    }
+
     if (req.method === "GET") {
       const page = routeToPage(pathname);
       if (page) {
@@ -533,67 +598,6 @@ async function handleRequest(req, res) {
           return sendJson(res, 200, data);
         } catch (err) {
           return sendJson(res, 500, { error: "Erro ao buscar comuns." });
-        }
-      }
-
-      if (pathname === "/api/profile") {
-        const supabaseUrl = process.env.SUPABASE_URL;
-        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-        if (req.method === "GET") {
-          const userId = url.searchParams.get("id");
-          if (!userId) return sendJson(res, 400, { error: "ID do usuário ausente." });
-          
-          const urlProfile = new URL(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/rjm_auxiliares?id=eq.${userId}&select=full_name,comum,cidade`);
-          try {
-            const response = await fetch(urlProfile, {
-              headers: {
-                apikey: supabaseKey,
-                Authorization: `Bearer ${supabaseKey}`
-              }
-            });
-            const data = await response.json();
-            return sendJson(res, 200, data[0] || {});
-          } catch (err) {
-            return sendJson(res, 500, { error: "Erro ao buscar perfil." });
-          }
-        }
-
-        if (req.method === "POST") {
-          let body = "";
-          req.on("data", chunk => body += chunk);
-          req.on("end", async () => {
-            try {
-              const profileData = JSON.parse(body);
-              console.log("Recebido /api/profile (POST):", profileData);
-              if (!profileData.id) return sendJson(res, 400, { error: "ID do usuário obrigatório." });
-
-              const urlUpsert = new URL(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/rjm_auxiliares`);
-              const response = await fetch(urlUpsert, {
-                method: "POST",
-                headers: {
-                  apikey: supabaseKey,
-                  Authorization: `Bearer ${supabaseKey}`,
-                  "Content-Type": "application/json",
-                  "Prefer": "resolution=merge-duplicates"
-                },
-                body: JSON.stringify(profileData)
-              });
-
-              if (!response.ok) {
-                const errorText = await response.text();
-                console.error("Erro no Supabase ao dar upsert:", errorText);
-                return sendJson(res, response.status, { error: "Erro ao salvar perfil no Supabase.", details: errorText });
-              }
-
-              console.log("Perfil salvo com sucesso no Supabase!");
-              return sendJson(res, 200, { success: true });
-            } catch (err) {
-              console.error("Erro interno no processamento do perfil:", err);
-              return sendJson(res, 500, { error: "Erro interno ao processar perfil." });
-            }
-          });
-          return;
         }
       }
 

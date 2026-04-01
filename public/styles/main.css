@@ -410,6 +410,18 @@ textarea:focus {
   z-index: 1001;
 }
 
+.sac-form .form-group.is-locked {
+  background: #f8fafc;
+  cursor: not-allowed;
+  border-color: var(--line);
+}
+
+.sac-form .form-group.is-locked input {
+  font-weight: 700;
+  color: var(--brand);
+  cursor: not-allowed;
+}
+
 .sac-form .input-icon-box {
   width: 50px;
   display: flex;
