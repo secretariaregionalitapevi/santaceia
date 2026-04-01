@@ -17,7 +17,7 @@
   
   <div class="top-nav">
     <div style="display: flex; align-items: center; gap: 12px;">
-      <img src="/assets/logo-ccb.png" style="height: 24px;" alt="CCB" />
+      <img src="/assets/logo-ccb.png" style="height: 46px;" alt="CCB" />
       <span style="font-weight: 700; color: var(--brand);">Regional Itapevi</span>
     </div>
     <div style="display: flex; align-items: center; gap: 12px;">
@@ -36,18 +36,24 @@
 
       <div class="sac-body">
         <form id="selectionForm" class="sac-form">
-          <div class="form-group stack-mobile">
-            <div class="input-icon-box" style="font-size: 13px; font-weight: 700; color: #1e3a5a; text-transform: uppercase;">Mês</div>
+          <!-- Mês -->
+          <div class="form-group">
+            <div class="input-icon-box">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y1="10"></line></svg>
+            </div>
             <select id="mes" name="mes" required></select>
           </div>
 
           <input type="hidden" id="municipio" name="municipio" required />
+          <input type="hidden" id="comum" name="comum" required />
 
-          <div class="form-group stack-mobile">
-            <div class="input-icon-box" style="font-size: 13px; font-weight: 700; color: #1e3a5a; text-transform: uppercase;">Comum</div>
+          <!-- Comum -->
+          <div class="form-group">
+            <div class="input-icon-box">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+            </div>
             <div class="sac-search-container">
               <input type="text" id="comumSearch" placeholder="Pesquise sua Comum..." autocomplete="off" />
-              <input type="hidden" id="comum" name="comum" required />
               <div id="comumResults" class="sac-search-results"></div>
             </div>
           </div>

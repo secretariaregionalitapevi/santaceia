@@ -66,17 +66,31 @@ document.addEventListener('DOMContentLoaded', async () => {
           <input type="number" name="meninos_${index}" min="0" value="0" required class="count-input">
         </div>
         <div class="form-group">
-          <label>Total Presentes</label>
-          <input type="number" name="total_presentes_${index}" value="0" readonly style="background: #f1f5f9; font-weight: bold; color: var(--brand); border: 1px solid #cbd5e1;">
+          <label>Total</label>
+          <input type="number" name="total_presentes_${index}" value="0" readonly class="count-input total-field">
         </div>
       </div>
     `;
 
-    // Adicionar listener para cálculo automático (Soma Travada)
-    const inputs = card.querySelectorAll('.count-input');
+    // Adicionar listener para cálculo automático e UX de entrada
+    const inputs = card.querySelectorAll('.count-input:not(.total-field)');
     const totalField = card.querySelector(`input[name="total_presentes_${index}"]`);
     
     inputs.forEach(input => {
+      // Limpar o campo ao clicar se for 0
+      input.addEventListener('focus', () => {
+        if (input.value === '0') input.value = '';
+      });
+
+      // Se sair e estiver vazio, volta para 0
+      input.addEventListener('blur', () => {
+        if (input.value === '') {
+          input.value = '0';
+          // Disparar input para recalcular o total mesmo voltando para 0
+          input.dispatchEvent(new Event('input'));
+        }
+      });
+
       input.addEventListener('input', () => {
         let sum = 0;
         inputs.forEach(i => sum += parseInt(i.value || 0));

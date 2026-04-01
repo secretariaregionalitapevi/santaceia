@@ -84,9 +84,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (error) {
         if (feedback) feedback.textContent = 'Erro: ' + translateError(error.message);
       } else {
-        // Limpar qualquer resquício de estado anterior antes de entrar
-        sessionStorage.clear();
-        localStorage.removeItem('recitativos_config'); // Limpar config específica se houver
+        // Limpar apenas configurações específicas de dados, mas NÃO a sessão do Supabase
+        sessionStorage.removeItem('recitativos_config');
         window.location.href = '/';
       }
     });
@@ -153,8 +152,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         icon: 'success',
         confirmButtonColor: '#003049'
       }).then(() => {
-        // Limpar estados locais ao criar conta para garantir login limpo
-        sessionStorage.clear();
+        // Limpar estados locais ao criar conta
+        sessionStorage.removeItem('recitativos_config');
         window.location.href = '/login.html';
       });
     });
