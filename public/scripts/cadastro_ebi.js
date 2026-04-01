@@ -190,7 +190,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!res.ok) throw new Error('Falha no envio de uma das datas');
       }
 
-      Swal.fire('Sucesso!', 'Lançamento realizado com sucesso.', 'success').then(() => {
+      Swal.fire({
+        title: 'Sucesso!',
+        text: 'Lançamento realizado com sucesso.',
+        icon: 'success',
+        timer: 4000,
+        timerProgressBar: true,
+        showConfirmButton: true,
+        confirmButtonText: 'OK',
+        confirmButtonColor: '#1e4b7a'
+      }).then(() => {
         window.location.href = '/';
       });
     } catch (err) {

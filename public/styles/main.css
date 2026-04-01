@@ -234,7 +234,15 @@ textarea:focus {
 
 @media (max-width: 400px) {
   .grid-counts {
-    grid-template-columns: 1fr 1fr; /* Em telas minúsculas, 2 colunas e o total desce */
+    grid-template-columns: repeat(3, 1fr); /* Força 3 colunas no iPhone 8/SE */
+    gap: 6px;
+  }
+  .grid-counts label {
+    font-size: 10px; /* Fonte levemente menor para caber em 320px */
+  }
+  .grid-counts .count-input {
+    padding: 8px 4px !important;
+    font-size: 15px;
   }
 }
 
@@ -269,15 +277,22 @@ textarea:focus {
   width: auto;
 }
 
-.top-nav .btn-logout {
+.top-nav .btn-logout, .top-nav .btn-back {
   display: inline-flex;
   align-items: center;
-  padding: 6px 16px;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
   border-radius: 50px;
   font-size: 13px;
   font-weight: 700;
   text-decoration: none;
   transition: all 0.2s;
+  height: 38px; /* Altura fixa para ambos os botões */
+  white-space: nowrap; /* Impede quebra de linha no texto */
+}
+
+.top-nav .btn-logout {
   background: var(--brand);
   color: #fff;
   border: 1px solid var(--brand);
@@ -291,10 +306,13 @@ textarea:focus {
 .top-nav .btn-back {
   background: #fff;
   color: var(--brand);
+  border: 1px solid var(--line);
 }
 
 .top-nav .btn-back:hover {
   background: #f8fafc;
+  border-color: var(--brand);
+  transform: translateY(-1px);
 }
 
 .auth-wrap {
