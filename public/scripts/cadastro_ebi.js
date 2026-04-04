@@ -50,12 +50,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
 
-  function createCard(dateLabel, index) {
+  function createCard(title, index, initialISO = null) {
     const card = document.createElement('div');
     card.className = 'sunday-card';
+    
+    // Se no modo mensal, permitimos editar a data de cada aula. 
+    // No modo avulso, a data já foi selecionada no topo e injetada aqui.
+    const dateField = initialISO 
+      ? `<label style="font-size: 13px; color: #64748b; margin-bottom: 5px; display: block;">Confirme a data desta aula:</label>
+         <input type="date" name="date_${index}" value="${initialISO}" required style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; margin-bottom:15px; font-family:inherit;">`
+      : `<input type="hidden" name="date_${index}" value="${title.replace('Data: ', '')}">`;
+
     card.innerHTML = `
-      <div class="sunday-card-title">${dateLabel}</div>
-      <input type="hidden" name="date_${index}" value="${dateLabel}">
+      <div class="sunday-card-title" style="margin-bottom: 10px; color: var(--brand); font-weight: 700;">${title}</div>
+      ${dateField}
       <div class="grid-counts">
         <div class="form-group">
           <label>Meninas</label>
@@ -102,25 +110,49 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   if (config.type === 'all') {
-    config.sundays.forEach((date, i) => {
-      container.appendChild(createCard(`Domingo ${i + 1} (${date})`, i));
+    config.sundays.forEach((dateBR, i) => {
+      // Converter DD/MM/YYYY para YYYY-MM-DD para o value do input date
+      const [d, m, y] = dateBR.split('/');
+      const iso = `${y}-${m}-${d}`;
+      container.appendChild(createCard(`Aula ${i + 1}`, i, iso));
     });
   } else {
     datePickerRow.classList.remove('hidden');
-    config.sundays.forEach(date => {
-      const opt = document.createElement('option');
-      opt.value = date;
-      opt.textContent = date;
-      selectedDateSelect.appendChild(opt);
-    });
+    
+    // Configurar limites e valor padrão do input date
+    const mesesNomes = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    const mesIndex = mesesNomes.indexOf(config.mes);
+    const year = new Date().getFullYear();
+    
+    const fmtISO = (d) => {
+      const z = n => n < 10 ? '0' + n : n;
+      return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())}`;
+    };
+    
+    // Alimentar sempre com a data do dia (hoje)
+    const today = new Date();
+    selectedDateSelect.value = fmtISO(today);
 
-    selectedDateSelect.addEventListener('change', (e) => {
+    const updateCard = (isoDate) => {
       container.innerHTML = '';
-      if (e.target.value) {
-        container.appendChild(createCard(`Data: ${e.target.value}`, 0));
+      if (isoDate) {
+        const [y, m, d] = isoDate.split('-');
+        container.appendChild(createCard(`Data: ${d}/${m}/${y}`, 0));
       }
-    });
+    };
+
+    updateCard(selectedDateSelect.value);
+    selectedDateSelect.addEventListener('change', (e) => updateCard(e.target.value));
   }
+
+  // Função para converter data PT-BR (DD/MM/YYYY) para ISO (YYYY-MM-DD)
+  const formatToISO = (dateStr) => {
+    if (!dateStr) return null;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+    const match = dateStr.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+    if (match) return `${match[3]}-${match[2]}-${match[1]}`;
+    return dateStr;
+  };
 
   const form = document.getElementById('recitativosForm');
   form.addEventListener('submit', async (e) => {
@@ -134,15 +166,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const formData = new FormData(form);
     const rawData = Object.fromEntries(formData.entries());
-    
-    // Função para converter data PT-BR (DD/MM/YYYY) para ISO (YYYY-MM-DD)
-    const formatToISO = (dateStr) => {
-      if (!dateStr) return null;
-      // Tratar casos como "Domingo 1 (31/03/2026)" ou "Data: 31/03/2026"
-      const match = dateStr.match(/(\d{2})\/(\d{2})\/(\d{4})/);
-      if (match) return `${match[3]}-${match[2]}-${match[1]}`;
-      return dateStr;
-    };
 
     // Agrupar lançamentos
     const entries = [];
@@ -151,7 +174,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     for (let i = 0; i < count; i++) {
         const dateLabel = (config.type === 'all') ? rawData[`date_${i}`] : selectedDateSelect.value;
         if (!dateLabel && config.type !== 'all') {
-          Swal.fire('Aviso', 'Selecione a data do domingo.', 'warning');
+          Swal.fire('Aviso', 'Selecione a data.', 'warning');
           return;
         }
 
