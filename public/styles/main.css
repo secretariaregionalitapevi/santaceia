@@ -26,9 +26,11 @@ body {
 .auth-wrap {
   min-height: 100vh;
   display: flex;
+  flex-direction: column; /* Ensure vertical stacking */
   align-items: center;
   justify-content: center;
   padding: 20px;
+  width: 100%;
 }
 
 .card {
@@ -383,7 +385,7 @@ textarea:focus {
 }
 
 .sac-body {
-  padding: 40px;
+  padding: 30px 40px; /* Reduced vertical padding */
   background: #fff;
 }
 
@@ -529,11 +531,12 @@ textarea:focus {
 }
 
 .sac-page-footer {
-  margin-top: 30px;
+  margin-top: 20px;
   text-align: center;
-  font-size: 11px; /* Smaller footer */
+  font-size: 11px;
   color: #94a3b8;
   line-height: 1.5;
+  width: 100%;
 }
 
 .sac-page-footer a {
@@ -620,3 +623,66 @@ textarea:focus {
 .sac-search-item strong {
   color: #1e3a5a;
 }
+
+/* Tabs System */
+.sac-tabs {
+  display: flex;
+  border-bottom: 2px solid #e2e8f0;
+  margin-bottom: 25px;
+  gap: 15px;
+}
+
+.sac-tab {
+  padding: 10px 20px;
+  cursor: pointer;
+  font-weight: 700;
+  color: #64748b;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+}
+
+.sac-tab.active {
+  color: var(--brand);
+  border-bottom-color: var(--brand);
+}
+
+.sac-tab-content {
+  display: none;
+}
+
+.sac-tab-content.active {
+  display: block;
+}
+
+.btn-report {
+  background: #10b981 !important;
+  color: white !important;
+  margin-top: 15px;
+}
+
+.btn-report:hover {
+  background: #059669 !important;
+}
+
+@media print {
+  .top-nav, .sac-tabs, #btnAddIrmas, #btnAddIrmaos, .sac-btn, .btn-report, .btn-remove-round, .btn-outline {
+    display: none !important;
+  }
+  body {
+    background: white !important;
+    padding: 0 !important;
+  }
+  .auth-wrap {
+    min-height: auto !important;
+    padding: 0 !important;
+  }
+  .card-wide {
+    box-shadow: none !important;
+    border: none !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+}
+

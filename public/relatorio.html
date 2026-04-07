@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Relatório Santa Ceia - Regional Itapevi</title>
+  <style>
+    :root {
+      --border-color: #000;
+      --text-main: #000;
+    }
+
+    * { 
+      box-sizing: border-box; 
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    @page {
+      size: A4;
+      margin: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f1f5f9;
+      margin: 0;
+      padding: 0;
+      color: var(--text-main);
+    }
+
+    .report-container {
+      background: white;
+      width: 210mm;
+      height: 297mm;
+      margin: 0 auto;
+      padding: 10mm 15mm;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    @media print {
+      body { background: white; }
+      .report-container { 
+        margin: 0; 
+        box-shadow: none; 
+        width: 210mm;
+        height: 297mm;
+        padding: 5mm 12mm;
+      }
+      .no-print { display: none !important; }
+    }
+
+    /* Cabeçalho com Logo */
+    .header-area {
+      display: flex;
+      align-items: stretch;
+      border: 2px solid #000;
+      margin-bottom: 12px;
+      height: 90px;
+    }
+
+    .logo-box {
+      width: 120px;
+      padding: 10px;
+      border-right: 2px solid #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .logo-box img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .title-box {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .title-box h1 {
+      margin: 0;
+      font-size: 24px;
+      text-transform: uppercase;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+
+    .title-box .date-row {
+      font-size: 15px;
+      font-weight: 700;
+      margin-top: 5px;
+    }
+
+    .section-box {
+      border: 1px solid #000;
+      margin-bottom: 12px;
+    }
+
+    .row {
+      display: flex;
+      border-bottom: 1px solid #000;
+    }
+    .row:last-child { border-bottom: none; }
+
+    .field {
+      padding: 4px 12px;
+      flex: 1;
+    }
+    .field-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      color: #334155;
+      display: block;
+      margin-bottom: 2px;
+    }
+    .field-value {
+      font-weight: 700;
+      font-size: 14px;
+      display: block;
+      min-height: 20px;
+      text-transform: uppercase;
+    }
+
+    .border-right { border-right: 1px solid #000; }
+
+    .distribution-section {
+      margin-top: 5px;
+    }
+    .dist-title {
+      background: #e2e8f0;
+      text-align: center;
+      font-weight: 900;
+      padding: 4px;
+      border: 1px solid #000;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+      font-size: 14px;
+      letter-spacing: 2px;
+    }
+
+    .split-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    th, td {
+      border: 1px solid #000;
+      padding: 2px 10px;
+      height: 21px;
+    }
+    th {
+      background: #f1f5f9;
+      text-transform: uppercase;
+      font-weight: 900;
+    }
+    .col-rodada { width: 45px; text-align: center; font-weight: bold; }
+    .col-valor { text-align: right; font-weight: 900; width: 70px; font-size: 13px; }
+
+    .footer-summary {
+      margin-top: 15px;
+    }
+    .total-banner {
+      background: #cbd5e1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 25px;
+      border: 3px solid #000;
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    .comparative-box {
+      margin-top: 10px;
+      display: flex;
+      justify-content: flex-end;
+    }
+    .comp-table {
+      width: 320px;
+      font-size: 12px;
+    }
+    .comp-table td { height: 25px; }
+
+    .report-footer {
+      margin-top: auto;
+      text-align: center;
+      border-top: 1px solid #000;
+      padding-top: 15px;
+      padding-bottom: 10px;
+    }
+    .footer-title { font-weight: 900; font-size: 13px; text-transform: uppercase; }
+    .footer-address { font-size: 10px; color: #000; margin-top: 3px; }
+
+    .btn-print {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #1e4b7a;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      z-index: 100;
+    }
+    .btn-print:hover { background: #1a3a5a; }
+  </style>
+</head>
+<body>
+
+  <button class="btn-print no-print" onclick="window.print()">IMPRIMIR / SALVAR PDF</button>
+
+  <div class="report-container">
+    <div class="header-area">
+      <div class="logo-box">
+        <img src="/assets/logo-ccb-light.png" alt="CCB Logo">
+      </div>
+      <div class="title-box">
+        <h1>CONTROLE SANTA CEIA</h1>
+        <div class="date-row" id="displayDate">--</div>
+      </div>
+    </div>
+
+    <div class="section-box">
+      <div class="row">
+        <div class="field">
+          <span class="field-label">Atendimento:</span>
+          <span class="field-value" id="displayAtendimento">--</span>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field border-right" style="flex: 2;">
+          <span class="field-label">Localidade:</span>
+          <span class="field-value" id="displayLocalidade">--</span>
+        </div>
+        <div class="field">
+          <span class="field-label">Hora:</span>
+          <span class="field-value" id="displayHora">--</span>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <span class="field-label">Palavra:</span>
+          <span class="field-value" id="displayPalavra">--</span>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field border-right">
+          <span class="field-label">Oração pelo Pão:</span>
+          <span class="field-value" id="displayOracaoPao">--</span>
+        </div>
+        <div class="field">
+          <span class="field-label">Oração Pelo Cálice:</span>
+          <span class="field-value" id="displayOracaoCalice">--</span>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <span class="field-label">Diáconos:</span>
+          <span class="field-value" id="displayDiaconos">--</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="distribution-section">
+      <div class="dist-title">DISTRIBUIÇÃO</div>
+      
+      <div class="split-grid">
+        <!-- Coluna Irmãs -->
+        <div>
+          <table>
+            <thead>
+              <tr>
+                <th colspan="2">IRMÃS</th>
+              </tr>
+            </thead>
+            <tbody id="tableIrmas"></tbody>
+            <tfoot>
+              <tr>
+                <th style="text-align: right;">TOTAL</th>
+                <th id="totalIrmas" style="text-align: right;">0</th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <!-- Coluna Irmãos -->
+        <div>
+          <table>
+            <thead>
+              <tr>
+                <th colspan="2">IRMÃOS</th>
+              </tr>
+            </thead>
+            <tbody id="tableIrmaos"></tbody>
+            <tfoot>
+              <tr>
+                <th style="text-align: right;">TOTAL</th>
+                <th id="totalIrmaos" style="text-align: right;">0</th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-summary">
+      <div class="total-banner">
+        <span>TOTAL GERAL</span>
+        <span id="grandTotal">0</span>
+      </div>
+
+      <div class="comparative-box">
+        <table class="comp-table">
+          <tr>
+            <td>No ano anterior participaram:</td>
+            <td id="valAnoAnterior" style="text-align: right; font-weight: 700;">0</td>
+          </tr>
+          <tr>
+            <td>Diferença</td>
+            <td id="valDiferenca" style="text-align: right; font-weight: 700; color: #ef4444;">0</td>
+          </tr>
+          <tr>
+            <td>Percentual</td>
+            <td id="valPercent" style="text-align: right; font-weight: 700;">0%</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="report-footer">
+      <div class="footer-title">Secretaria da Administração</div>
+      <div class="footer-address">Sede da Administração da Regional Itapevi - Ana Araújo de Castro, 815 - CEP.: 06653-140</div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const data = JSON.parse(sessionStorage.getItem('santa_ceia_report_data'));
+      if (!data) {
+        alert('Nenhum dado encontrado para gerar o relatório.');
+        return;
+      }
+
+      // Preencher Cabeçalho
+      const dateObj = new Date(data.date + 'T12:00:00');
+      const formattedDate = dateObj.toLocaleDateString('pt-BR', { 
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
+      });
+      document.getElementById('displayDate').textContent = formattedDate;
+      document.getElementById('displayAtendimento').textContent = data.atendimento || '--';
+      document.getElementById('displayLocalidade').textContent = data.comum || '--';
+      document.getElementById('displayHora').textContent = data.hora || '--';
+      document.getElementById('displayPalavra').textContent = data.palavra || '--';
+      document.getElementById('displayOracaoPao').textContent = data.oracao_pao || '--';
+      document.getElementById('displayOracaoCalice').textContent = data.oracao_calice || '--';
+      document.getElementById('displayDiaconos').textContent = data.diaconos || '--';
+
+      // Preencher Tabelas
+      let sumIrmas = 0;
+      let sumIrmaos = 0;
+      
+      const tbodyIrmas = document.getElementById('tableIrmas');
+      const tbodyIrmaos = document.getElementById('tableIrmaos');
+
+      // Mostrar as 20 primeiras rodadas (ajustado para caber no A4)
+      for (let i = 1; i <= 20; i++) {
+        // Irmãs
+        const rowIrmas = document.createElement('tr');
+        const countIrmas = data.roundsIrmas.find(r => r.rodada === i)?.val || 0;
+        sumIrmas += parseInt(countIrmas);
+        rowIrmas.innerHTML = `<td class="col-rodada">#${i}</td><td class="col-valor">${countIrmas || ''}</td>`;
+        tbodyIrmas.appendChild(rowIrmas);
+
+        // Irmãos
+        const rowIrmaos = document.createElement('tr');
+        const countIrmaos = data.roundsIrmaos.find(r => r.rodada === i)?.val || 0;
+        sumIrmaos += parseInt(countIrmaos);
+        rowIrmaos.innerHTML = `<td class="col-rodada">#${i}</td><td class="col-valor">${countIrmaos || ''}</td>`;
+        tbodyIrmaos.appendChild(rowIrmaos);
+      }
+
+      document.getElementById('totalIrmas').textContent = sumIrmas;
+      document.getElementById('totalIrmaos').textContent = sumIrmaos;
+      
+      const grandTotal = sumIrmas + sumIrmaos;
+      document.getElementById('grandTotal').textContent = grandTotal;
+
+      // Comparativo
+      const anoAnterior = parseInt(data.ano_anterior) || 0;
+      const diferenca = grandTotal - anoAnterior;
+      const percent = anoAnterior > 0 ? ((diferenca / anoAnterior) * 100).toFixed(2) : 0;
+
+      document.getElementById('valAnoAnterior').textContent = anoAnterior;
+      document.getElementById('valDiferenca').textContent = (diferenca > 0 ? '+' : '') + diferenca;
+      document.getElementById('valDiferenca').style.color = diferenca >= 0 ? '#10b981' : '#ef4444';
+      document.getElementById('valPercent').textContent = percent + '%';
+
+      // --- AUTO PRINT PARA MOBILE ---
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('autoPrint') === 'true') {
+        setTimeout(() => {
+          window.print();
+        }, 500); // Pequeno atraso para garantir renderização completa
+      }
+    });
+  </script>
+</body>
+</html>

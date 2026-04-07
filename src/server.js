@@ -482,9 +482,8 @@ function routeToPage(pathname) {
   if (pathname === "/") return "index.html";
   if (pathname === "/login.html") return "login.html";
   if (pathname === "/registro.html" || pathname === "/registro") return "registro.html";
-  if (pathname === "/cadastro") return "cadastro.html";
-  if (pathname === "/cadastro/crianca") return "cadastro.html";
-  if (pathname === "/cadastro/monitor") return "cadastro.html";
+  if (pathname === "/contagem" || pathname === "/cadastro") return "contagem.html";
+  if (pathname === "/relatorio.html" || pathname === "/relatorio") return "relatorio.html";
   return null;
 }
 
@@ -494,7 +493,7 @@ async function handleRequest(req, res) {
   const pathname = url.pathname;
 
   try {
-    // --- ROTA DE PERFIL (GET/POST) - Prioridade Máxima ---
+    // --- ROTA DE PERFIL (GET/POST) ---
     if (pathname === "/api/profile") {
       const supabaseUrl = process.env.SUPABASE_URL;
       const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -503,8 +502,7 @@ async function handleRequest(req, res) {
         const userId = url.searchParams.get("id");
         if (!userId) return sendJson(res, 400, { error: "ID do usuário ausente." });
 
-        // Query baseada na sonda: a tabela pode ser 'profiles' ou 'rjm_auxiliares'
-        const table = process.env.SUPABASE_TABLE_AUXILIARES || 'profiles';
+        const table = 'profiles';
         const urlProfile = new URL(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/${table}?id=eq.${userId}&select=*`);
         try {
           const response = await fetch(urlProfile, {
@@ -514,12 +512,8 @@ async function handleRequest(req, res) {
             }
           });
           const data = await response.json();
-          // Retornar o primeiro registro encontrado
-          if (data && data.length > 0) {
-            return sendJson(res, 200, data[0]);
-          }
+          if (data && data.length > 0) return sendJson(res, 200, data[0]);
           
-          // Fallback para user_id se for a tabela profiles legada
           const urlLegacy = new URL(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/${table}?user_id=eq.${userId}&select=*`);
           const resLegacy = await fetch(urlLegacy, {
             headers: {
@@ -530,7 +524,6 @@ async function handleRequest(req, res) {
           const dataLegacy = await resLegacy.json();
           return sendJson(res, 200, dataLegacy[0] || {});
         } catch (err) {
-          console.error('Erro ao buscar perfil:', err);
           return sendJson(res, 500, { error: "Erro ao buscar perfil." });
         }
       }
@@ -541,10 +534,9 @@ async function handleRequest(req, res) {
         req.on("end", async () => {
           try {
             const profileData = JSON.parse(body);
-            console.log("Recebido /api/profile (POST):", profileData);
             if (!profileData.id) return sendJson(res, 400, { error: "ID do usuário obrigatório." });
 
-            const table = process.env.SUPABASE_TABLE_AUXILIARES || 'profiles';
+            const table = 'profiles';
             const urlUpsert = new URL(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/${table}`);
             const response = await fetch(urlUpsert, {
               method: "POST",
@@ -559,14 +551,10 @@ async function handleRequest(req, res) {
 
             if (!response.ok) {
               const errorText = await response.text();
-              console.error("Erro no Supabase ao dar upsert:", errorText);
-              return sendJson(res, response.status, { error: "Erro ao salvar perfil no Supabase.", details: errorText });
+              return sendJson(res, response.status, { error: "Erro ao salvar perfil.", details: errorText });
             }
-
-            console.log("Perfil salvo com sucesso no Supabase!");
             return sendJson(res, 200, { success: true });
           } catch (err) {
-            console.error("Erro interno no processamento do perfil:", err);
             return sendJson(res, 500, { error: "Erro interno ao processar perfil." });
           }
         });
@@ -574,6 +562,147 @@ async function handleRequest(req, res) {
       }
     }
 
+    // --- ROTA DE CONTAGEM (RODADAS) ---
+    if (pathname === "/api/santa-ceia-contagem") {
+      const supabaseUrl = process.env.SUPABASE_URL;
+      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      const supabaseTable = "santa_ceia_contagem";
+
+      if (req.method === "GET") {
+        const date = url.searchParams.get("date");
+        const municipio = url.searchParams.get("municipio");
+        const comum = url.searchParams.get("comum");
+
+        if (!date || !municipio || !comum) {
+          return sendJson(res, 400, { error: "Parâmetros obrigatórios ausentes." });
+        }
+
+        const urlFetch = new URL(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/${supabaseTable}`);
+        urlFetch.searchParams.set("data_evento", `eq.${date}`);
+        urlFetch.searchParams.set("municipio", `eq.${municipio}`);
+        urlFetch.searchParams.set("comum", `eq.${comum}`);
+        urlFetch.searchParams.set("order", "rodada.asc");
+
+        try {
+          const response = await fetch(urlFetch, {
+            headers: {
+              apikey: supabaseKey,
+              Authorization: `Bearer ${supabaseKey}`
+            }
+          });
+          const data = await response.json();
+          return sendJson(res, 200, data);
+        } catch (err) {
+          return sendJson(res, 500, { error: "Erro ao buscar dados." });
+        }
+      }
+
+      if (req.method === "POST") {
+        const entries = await readJsonBody(req);
+        if (!entries || !Array.isArray(entries) || entries.length === 0) {
+          return sendJson(res, 400, { error: "Dados inválidos." });
+        }
+
+        const { data_evento, municipio, comum } = entries[0];
+        const baseUrl = `${supabaseUrl.replace(/\/$/, "")}/rest/v1/${supabaseTable}`;
+
+        try {
+          const deleteUrl = new URL(baseUrl);
+          deleteUrl.searchParams.set("data_evento", `eq.${data_evento}`);
+          deleteUrl.searchParams.set("municipio", `eq.${municipio}`);
+          deleteUrl.searchParams.set("comum", `eq.${comum}`);
+          await fetch(deleteUrl, {
+            method: "DELETE",
+            headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` }
+          });
+
+          const resSupabase = await fetch(baseUrl, {
+            method: "POST",
+            headers: {
+              apikey: supabaseKey,
+              Authorization: `Bearer ${supabaseKey}`,
+              "Content-Type": "application/json",
+              "Prefer": "return=minimal"
+            },
+            body: JSON.stringify(entries)
+          });
+          
+          if (!resSupabase.ok) {
+            const errorText = await resSupabase.text();
+            return sendJson(res, resSupabase.status, { error: "Falha na gravação.", details: errorText });
+          }
+          return sendJson(res, 201, { message: "Sincronizado com sucesso." });
+        } catch (err) {
+          return sendJson(res, 500, { error: "Falha de conexão." });
+        }
+      }
+      return;
+    }
+
+    // --- ROTA DE METADADOS (EVENTO) ---
+    if (pathname === "/api/santa-ceia-evento") {
+      const supabaseUrl = process.env.SUPABASE_URL;
+      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+      const baseUrl = `${supabaseUrl.replace(/\/$/, "")}/rest/v1/santa_ceia_eventos`;
+
+      if (req.method === "GET") {
+        const date = url.searchParams.get("date");
+        const municipio = url.searchParams.get("municipio");
+        const comum = url.searchParams.get("comum");
+
+        if (!date || !municipio || !comum) return sendJson(res, 400, { error: "Parâmetros ausentes." });
+
+        const urlFetch = new URL(baseUrl);
+        urlFetch.searchParams.set("data_evento", `eq.${date}`);
+        urlFetch.searchParams.set("municipio", `eq.${municipio}`);
+        urlFetch.searchParams.set("comum", `eq.${comum}`);
+
+        try {
+          const response = await fetch(urlFetch, {
+            headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` }
+          });
+          const data = await response.json();
+          return sendJson(res, 200, data[0] || {});
+        } catch (err) {
+          return sendJson(res, 500, { error: "Erro ao buscar evento." });
+        }
+      }
+
+      if (req.method === "POST") {
+        const payload = await readJsonBody(req);
+        const { data_evento, municipio, comum } = payload;
+        
+        try {
+          const deleteUrl = new URL(baseUrl);
+          deleteUrl.searchParams.set("data_evento", `eq.${data_evento}`);
+          deleteUrl.searchParams.set("municipio", `eq.${municipio}`);
+          deleteUrl.searchParams.set("comum", `eq.${comum}`);
+          await fetch(deleteUrl, {
+            method: "DELETE",
+            headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` }
+          });
+
+          const response = await fetch(baseUrl, {
+            method: "POST",
+            headers: {
+              apikey: supabaseKey,
+              Authorization: `Bearer ${supabaseKey}`,
+              "Content-Type": "application/json",
+              "Prefer": "return=minimal"
+            },
+            body: JSON.stringify(payload)
+          });
+
+          if (!response.ok) return sendJson(res, response.status, { error: "Falha ao salvar." });
+          return sendJson(res, 200, { success: true });
+        } catch (err) {
+          return sendJson(res, 500, { error: "Erro interno." });
+        }
+      }
+      return;
+    }
+
+    // --- OUTROS GETS (PÁGINAS/CONFIG/COMUNS) ---
     if (req.method === "GET") {
       const page = routeToPage(pathname);
       if (page) {
@@ -587,40 +716,24 @@ async function handleRequest(req, res) {
       }
 
       if (pathname === "/api/config") {
-        sendJson(res, 200, {
-          url: SUPABASE_URL,
-          anonKey: SUPABASE_ANON_KEY
-        });
-        return;
+        return sendJson(res, 200, { url: SUPABASE_URL, anonKey: SUPABASE_ANON_KEY });
       }
 
       if (pathname === "/api/comuns") {
         const supabaseUrl = process.env.SUPABASE_URL;
         const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-        if (!supabaseUrl || !supabaseKey) {
-          return sendJson(res, 500, { error: "Configuração do Supabase ausente." });
-        }
-
-        const normalizeValue = (value) => String(value || "").trim();
-        const normalizeComum = (item) => {
-          // Prioridade para nomes de colunas can\u00F4nicos 'comum' e 'cidade'
-          const comum = normalizeValue(item?.comum || item?.name || item?.nome || item?.descricao || item?.description);
-          const cidade = normalizeValue(item?.cidade || item?.city || item?.municipio || item?.localidade);
-          if (!comum) return null;
-          return { comum, cidade };
-        };
-
-        const url = new URL(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/comum?select=*`);
+        const urlComuns = new URL(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/comum?select=*`);
         try {
-          const response = await fetch(url, {
-            headers: {
-              apikey: supabaseKey,
-              Authorization: `Bearer ${supabaseKey}`
-            }
+          const response = await fetch(urlComuns, {
+            headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` }
           });
           const data = await response.json();
           const comuns = Array.isArray(data)
-            ? data.map(normalizeComum).filter(Boolean).sort((a, b) => a.comum.localeCompare(b.comum, "pt-BR"))
+            ? data.map(c => {
+                const comum = String(c.comum || c.name || c.nome || "").trim();
+                const cidade = String(c.cidade || c.city || c.municipio || "").trim();
+                return comum ? { comum, cidade } : null;
+              }).filter(Boolean).sort((a, b) => a.comum.localeCompare(b.comum, "pt-BR"))
             : [];
           return sendJson(res, 200, comuns);
         } catch (err) {
@@ -635,10 +748,8 @@ async function handleRequest(req, res) {
     if (req.method === "POST" && pathname === "/api/recitativos") {
       const payload = await readJsonBody(req);
       
-      // Salvar localmente (se habilitado no .env)
       const saved = await saveSubmission("recitativo", payload);
 
-      // Salvar no Supabase
       const supabaseUrl = process.env.SUPABASE_URL;
       const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
       const supabaseTable = process.env.SUPABASE_TABLE_RECITATIVOS || "rjm_recitativos";
@@ -688,64 +799,6 @@ async function handleRequest(req, res) {
       }
 
       sendJson(res, 201, { message: "Lançamento realizado com sucesso.", id: saved.id });
-      return;
-    }
-
-    if (req.method === "POST" && (pathname === "/api/cadastros/crianca" || pathname === "/api/cadastros/monitor")) {
-      const tipo = pathname.endsWith("crianca") ? "crianca" : "monitor";
-      const rawPayload = await readJsonBody(req);
-      const payload = toUppercaseDeep(rawPayload);
-      const missing = validateRequired(tipo, payload);
-
-      if (missing.length > 0) {
-        sendJson(res, 400, { error: "Campos obrigatórios ausentes.", missing });
-        return;
-      }
-
-      const existingEntries = await readSavedEntries();
-      const duplicateCheck = detectDuplicate(tipo, payload, existingEntries);
-      if (duplicateCheck.duplicate) {
-        const duplicate = buildDuplicateDetails(tipo, duplicateCheck.matchedEntry);
-        sendJson(res, 409, {
-          error: "Cadastro duplicado detectado.",
-          duplicateOf: duplicateCheck.matchedId,
-          duplicateReason: duplicateCheck.reason,
-          duplicate
-        });
-        return;
-      }
-
-      const saved = await saveSubmission(tipo, payload);
-      const webhookResult = await forwardToWebhook(tipo, payload, {
-        uuid: saved.id,
-        createdAt: saved.createdAt
-      });
-
-      if (!webhookResult.forwarded) {
-        console.error("webhook_forward_failed", {
-          tipo,
-          status: webhookResult.webhookStatus || 0,
-          source: webhookResult.webhookSource || "",
-          url: webhookResult.webhookUrl || "",
-          body: webhookResult.webhookErrorBody || ""
-        });
-        sendJson(res, 502, {
-          error: "Falha ao encaminhar cadastro para a integração.",
-          webhookStatus: webhookResult.webhookStatus || 0,
-          webhookSource: webhookResult.webhookSource || "",
-          webhookUrl: webhookResult.webhookUrl || ""
-        });
-        return;
-      }
-
-      sendJson(res, 201, {
-        message: "Cadastro recebido com sucesso.",
-        id: saved.id,
-        uuid: saved.uuid,
-        createdAt: saved.createdAt,
-        persistedLocally: saved.persistedLocally,
-        ...webhookResult
-      });
       return;
     }
 

@@ -70,12 +70,78 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // LOGIN
   if (loginForm) {
+    const comumInput = document.getElementById('comum');
+    const municipioInput = document.getElementById('municipio');
+    const comumSearch = document.getElementById('comumSearch');
+    const comumResults = document.getElementById('comumResults');
+    let allComuns = [];
+
+    // Carregar Comuns para o Autocomplete
+    try {
+      const resComuns = await fetch('/api/comuns');
+      allComuns = await resComuns.json();
+      
+      const renderResults = (filter = '') => {
+        const filtered = allComuns.filter(c => 
+          c.comum.toLowerCase().includes(filter.toLowerCase()) || 
+          c.cidade.toLowerCase().includes(filter.toLowerCase())
+        );
+        
+        comumResults.innerHTML = filtered.map(c => `
+          <div class="sac-search-item" data-value="${c.comum}" data-city="${c.cidade}">
+            <strong>${c.comum}</strong><br>
+            <small style="color: #64748b">${c.cidade}</small>
+          </div>
+        `).join('');
+        
+        comumResults.classList.toggle('active', filtered.length > 0 && filter !== '');
+      };
+
+      comumSearch.addEventListener('input', (e) => renderResults(e.target.value));
+      comumSearch.addEventListener('focus', () => {
+        if (comumSearch.value === '') renderResults('');
+        comumResults.classList.add('active');
+      });
+
+      comumResults.addEventListener('mousedown', (e) => {
+        const item = e.target.closest('.sac-search-item');
+        if (item) {
+          const val = item.dataset.value;
+          const city = item.dataset.city;
+          comumInput.value = val;
+          comumSearch.value = val;
+          municipioInput.value = city;
+          comumResults.classList.remove('active');
+        }
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!comumSearch.contains(e.target) && !comumResults.contains(e.target)) {
+          comumResults.classList.remove('active');
+        }
+      });
+    } catch (err) {
+      console.error('Erro ao carregar comuns:', err);
+    }
+
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = e.target.email.value;
       const password = e.target.password.value;
+      const municipio = municipioInput.value;
+      const comum = comumInput.value;
       const feedback = document.getElementById('loginFeedback');
       
+      if (!municipio || !comum) {
+        Swal.fire({
+          title: 'Selecione a Comum',
+          text: 'Por favor, selecione uma Casa de Oração para continuar.',
+          icon: 'warning',
+          confirmButtonColor: '#1e4b7a'
+        });
+        return;
+      }
+
       if (feedback) feedback.textContent = 'Autenticando...';
       if (!supabaseClient) await initSupabase();
       
@@ -84,9 +150,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (error) {
         if (feedback) feedback.textContent = 'Erro: ' + translateError(error.message);
       } else {
-        // Limpar apenas configurações específicas de dados, mas NÃO a sessão do Supabase
-        sessionStorage.removeItem('recitativos_config');
-        window.location.href = '/';
+        // Salvar configuração e ir direto para a contagem
+        const configData = {
+          municipio,
+          comum,
+          type: 'one'
+        };
+        sessionStorage.setItem('recitativos_config', JSON.stringify(configData));
+        window.location.href = '/contagem';
       }
     });
   }
@@ -129,7 +200,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
 
-      // 2. Salvar perfil na tabela rjm_auxiliares via API do servidor (seguro contra RLS/permissão)
+      // 2. Salvar perfil na tabela profiles via API do servidor (seguro contra RLS/permissão)
       try {
         const resProf = await fetch('/api/profile', {
           method: 'POST',
