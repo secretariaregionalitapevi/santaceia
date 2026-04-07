@@ -479,7 +479,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       Swal.fire({
         title: 'Sucesso!',
-        text: 'Contagem e Atendimento sincronizados com o servidor.',
+        text: 'Santa Ceia salva com sucesso',
         icon: 'success',
         timer: 3000,
         timerProgressBar: true,
