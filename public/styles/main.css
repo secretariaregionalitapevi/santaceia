@@ -730,6 +730,12 @@ input[type=number] {
   border-bottom: 2px solid #e2e8f0;
   margin-bottom: 25px;
   gap: 15px;
+  overflow-x: auto; /* Garantia de scroll se transbordar */
+  scrollbar-width: none; /* Firefox */
+}
+
+.sac-tabs::-webkit-scrollbar {
+  display: none; /* Chrome/Safari */
 }
 
 .sac-tab {
@@ -738,10 +744,23 @@ input[type=number] {
   font-weight: 700;
   color: #64748b;
   border-bottom: 3px solid transparent;
+  white-space: nowrap;
   transition: all 0.2s;
-  font-size: 0.9rem;
-  text-transform: uppercase;
 }
+
+@media (max-width: 480px) {
+  .sac-tabs {
+    gap: 5px;
+  }
+  .sac-tab {
+    padding: 10px 8px;
+    font-size: 12px;
+    flex: 1;
+    text-align: center;
+  }
+}
+
+
 
 .sac-tab.active {
   color: var(--brand);
