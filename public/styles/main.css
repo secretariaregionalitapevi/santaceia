@@ -219,12 +219,13 @@ textarea:focus {
 }
 
 .sunday-card.is-collapsed {
-  padding: 10px 16px;
+  padding: 15px;
   background: #f8fafc;
   cursor: pointer;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
+  gap: 10px;
 }
 
 .sunday-card.is-collapsed:hover {
@@ -233,7 +234,8 @@ textarea:focus {
 
 .sunday-card.is-collapsed .sunday-card-header {
   margin-bottom: 0;
-  flex: 1;
+  width: 100%;
+  text-align: center;
 }
 
 .sunday-card.is-collapsed .btn-remove-round {
@@ -242,11 +244,14 @@ textarea:focus {
 
 .sunday-card.is-collapsed .grid-counts {
   margin: 0 !important;
-  max-width: 100px !important;
+  width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 .sunday-card.is-collapsed .form-group {
   margin: 0 !important;
+  width: min(200px, 100%);
 }
 
 .sunday-card.is-collapsed label {
@@ -254,13 +259,14 @@ textarea:focus {
 }
 
 .sunday-card.is-collapsed .count-input {
-  height: 32px;
-  font-size: 14px;
+  height: 38px;
+  font-size: 16px;
   padding: 0 !important;
   background: #fff;
   border-color: #cbd5e1;
   text-align: center;
 }
+
 
 /* Remover setas de incremento nos campos de número para melhor centralização */
 input::-webkit-outer-spin-button,
