@@ -169,14 +169,6 @@ textarea:focus {
   width: 100%;
 }
 
-.total-field {
-  background: #f8fafc !important;
-  border-color: #cbd5e1 !important;
-  color: var(--brand) !important;
-  font-weight: 800 !important;
-  text-align: center;
-}
-
 .btn-outline {
   background: #fff;
   color: var(--brand);
@@ -212,11 +204,75 @@ textarea:focus {
 .sunday-card-title {
   font-weight: 700;
   color: var(--brand);
-  margin-bottom: 16px;
+  margin-bottom: 15px;
   font-size: 16px;
   border-bottom: 1px solid var(--line);
   padding-bottom: 8px;
+  transition: margin 0.2s;
 }
+
+/* Accordion States */
+.sunday-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  border-left: 4px solid var(--brand);
+}
+
+.sunday-card.is-collapsed {
+  padding: 10px 16px;
+  background: #f8fafc;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sunday-card.is-collapsed:hover {
+  background: #f1f5f9;
+}
+
+.sunday-card.is-collapsed .sunday-card-header {
+  margin-bottom: 0;
+  flex: 1;
+}
+
+.sunday-card.is-collapsed .btn-remove-round {
+  display: none !important;
+}
+
+.sunday-card.is-collapsed .grid-counts {
+  margin: 0 !important;
+  max-width: 100px !important;
+}
+
+.sunday-card.is-collapsed .form-group {
+  margin: 0 !important;
+}
+
+.sunday-card.is-collapsed label {
+  display: none;
+}
+
+.sunday-card.is-collapsed .count-input {
+  height: 32px;
+  font-size: 14px;
+  padding: 0 !important;
+  background: #fff;
+  border-color: #cbd5e1;
+  text-align: center;
+}
+
+/* Remover setas de incremento nos campos de número para melhor centralização */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+
 
 .grid-counts {
   display: grid;
@@ -481,34 +537,78 @@ textarea:focus {
   background-image: none !important; /* Only for select, not input */
 }
 
+
 .sac-btn {
   width: 100%;
-  height: 48px; /* Reduced from 54px */
+  height: 48px;
   background: #1e4b7a;
   color: #fff;
   border: none;
-  border-radius: 8px;
-  font-size: 15px; /* Slight reduction */
+  border-radius: 12px;
+  font-size: 14px;
   font-weight: 700;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
-  margin-top: 20px;
-  transition: all 0.2s;
+  margin-top: 15px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.8px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .sac-btn:hover {
-  background: #15355a;
-  box-shadow: 0 4px 10px rgba(30, 75, 122, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.sac-btn:active {
+  transform: translateY(0);
+}
+
+.sac-btn.btn-save {
+  background: linear-gradient(135deg, #1e4b7a 0%, #15355a 100%);
+  border-bottom: 3px solid #0f2641;
+}
+
+.sac-btn.btn-preview {
+  background: #64748b;
+  border-bottom: 3px solid #475569;
+}
+
+.sac-btn.btn-preview:hover {
+  background: #475569;
+}
+
+.sac-btn.btn-pdf {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-bottom: 3px solid #047857;
+}
+
+.sac-btn.btn-pdf:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+.sac-btn.btn-reset {
+  background: #fff;
+  color: #ef4444;
+  border: 2px solid #fee2e2;
+  margin-top: 5px;
+  box-shadow: none;
+}
+
+.sac-btn.btn-reset:hover {
+  background: #fef2f2;
+  border-color: #ef4444;
+  box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.1);
 }
 
 .sac-btn svg {
   width: 18px;
   height: 18px;
+  stroke-width: 2.5;
 }
 
 .sac-footer-links {

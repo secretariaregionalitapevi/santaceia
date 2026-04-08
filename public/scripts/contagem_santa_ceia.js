@@ -120,6 +120,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     await window.updateSummaryWithName(window.currentUser);
   }
 
+  function collapseAllRounds() {
+    document.querySelectorAll('.sunday-card').forEach(c => {
+      c.classList.add('is-collapsed');
+    });
+  }
+
+  function expandCard(card) {
+    if (!card.classList.contains('is-collapsed')) return;
+    collapseAllRounds();
+    card.classList.remove('is-collapsed');
+  }
+
   function createRoundCard(index, type) {
     const card = document.createElement('div');
     card.className = 'sunday-card';
@@ -130,28 +142,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     const fieldName = `${type}_${index}`;
     
     card.innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+      <div class="sunday-card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
         <div style="color: var(--brand); font-weight: 700; font-size: 1rem;">Rodada ${index} (${label})</div>
-        ${index > 0 ? `<button type="button" class="btn-remove-round" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 14px;">remover</button>` : ''}
+        <button type="button" class="btn-remove-round" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 14px; display: ${index === 1 ? 'none' : 'block'};">remover</button>
       </div>
-      <div class="grid-counts" style="grid-template-columns: 1fr 1fr; gap: 15px;">
-        <div class="form-group">
+      <div class="grid-counts" style="grid-template-columns: 1fr; max-width: 200px; margin: 0 auto;">
+        <div class="form-group" style="text-align: center;">
           <label>${label}</label>
           <input type="number" name="${fieldName}" min="0" value="0" required class="count-input">
-        </div>
-        <div class="form-group">
-          <label>Total</label>
-          <input type="number" name="total_${type}_${index}" value="0" readonly class="count-input total-field">
         </div>
       </div>
     `;
 
-    const input = card.querySelector('.count-input:not(.total-field)');
-    const totalField = card.querySelector(`input[name="total_${type}_${index}"]`);
+    const input = card.querySelector('.count-input');
     
     input.addEventListener('focus', () => {
+      expandCard(card);
       if (input.value === '0') input.value = '';
-      else input.select(); // Selecionar o texto se já houver algo para facilitar a troca
+      else input.select();
     });
 
     input.addEventListener('blur', () => {
@@ -161,13 +169,18 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
 
-    input.addEventListener('input', () => {
-      totalField.value = input.value || 0;
+    // Expandir ao clicar no card se estiver colapsado
+    card.addEventListener('click', (e) => {
+      if (card.classList.contains('is-collapsed')) {
+        expandCard(card);
+        input.focus();
+      }
     });
 
     const btnRemove = card.querySelector('.btn-remove-round');
     if (btnRemove) {
-      btnRemove.addEventListener('click', () => {
+      btnRemove.addEventListener('click', (e) => {
+        e.stopPropagation(); // Evitar que o clique no botão dispare a expansão do card
         card.remove();
         reorderRounds(type);
       });
@@ -187,18 +200,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     cards.forEach((card, i) => {
       const newIndex = i + 1;
       card.dataset.index = newIndex;
-      card.querySelector('div > div').textContent = `Rodada ${newIndex} (${label})`;
+      card.querySelector('.sunday-card-header > div').textContent = `Rodada ${newIndex} (${label})`;
       
       const countInput = card.querySelector(`input[name^="${type}_"]`);
-      const totalInput = card.querySelector(`input[name^="total_${type}_"]`);
-      
       countInput.name = `${type}_${newIndex}`;
-      totalInput.name = `total_${type}_${newIndex}`;
+
+      const btnRemove = card.querySelector('.btn-remove-round');
+      if (btnRemove) {
+        btnRemove.style.display = newIndex === 1 ? 'none' : 'block';
+      }
     });
   }
 
   function addRound(type) {
     const container = type === 'irmas' ? irmasContainer : irmaosContainer;
+    collapseAllRounds(); // Colapsar anteriores ao adicionar nova
     if (type === 'irmas') {
       irmasRoundCount++;
       container.appendChild(createRoundCard(irmasRoundCount, 'irmas'));
@@ -206,6 +222,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       irmaosRoundCount++;
       container.appendChild(createRoundCard(irmaosRoundCount, 'irmaos'));
     }
+    // A rodada nova já nasce expandida porque createRoundCard não coloca is-collapsed por padrão
+    // e o collapseAllRounds() roda antes de adicionar a nova.
   }
 
   // --- PERSISTÊNCIA DE RASCUNHO ---
@@ -263,25 +281,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     irmasContainer.innerHTML = '';
     irmaosContainer.innerHTML = '';
     
-    if (draft.roundsIrmas && draft.roundsIrmas.length > 0) {
-      draft.roundsIrmas.forEach(r => {
-        const card = createRoundCard(r.rodada, 'irmas');
+    // Auxiliar para colapsar todos menos o último
+    const setupRounds = (rounds, type, container) => {
+      rounds.forEach((r, i) => {
+        const card = createRoundCard(r.rodada, type);
         card.querySelector('input[type="number"]').value = r.val;
-        card.querySelector('.total-field').value = r.val;
-        irmasContainer.appendChild(card);
+        if (i < rounds.length - 1) card.classList.add('is-collapsed');
+        container.appendChild(card);
       });
+    };
+
+    if (draft.roundsIrmas && draft.roundsIrmas.length > 0) {
+      setupRounds(draft.roundsIrmas, 'irmas', irmasContainer);
       irmasRoundCount = draft.roundsIrmas.length;
     } else {
       addRound('irmas');
     }
 
     if (draft.roundsIrmaos && draft.roundsIrmaos.length > 0) {
-      draft.roundsIrmaos.forEach(r => {
-        const card = createRoundCard(r.rodada, 'irmaos');
-        card.querySelector('input[type="number"]').value = r.val;
-        card.querySelector('.total-field').value = r.val;
-        irmaosContainer.appendChild(card);
-      });
+      setupRounds(draft.roundsIrmaos, 'irmaos', irmaosContainer);
       irmaosRoundCount = draft.roundsIrmaos.length;
     } else {
       addRound('irmaos');
